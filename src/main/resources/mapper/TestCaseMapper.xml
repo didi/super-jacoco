@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaoju.hallowmas.mapper.TestCaseMapper">
+    <resultMap id="BaseResultMap" type="com.xiaoju.hallowmas.entity.TestCaseObject">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="case_name" jdbcType="VARCHAR" property="caseName"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified"/>
+        <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate"/>
+        <result column="deleted" jdbcType="TINYINT" property="deleted"/>
+        <result column="ownner" jdbcType="VARCHAR" property="ownner"/>
+    </resultMap>
+    <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.xiaoju.hallowmas.entity.TestCaseObject">
+        <result column="case_explain" jdbcType="LONGVARCHAR" property="explain"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    id, case_name, status, gmt_modified, gmt_create, deleted, ownner
+  </sql>
+    <sql id="Blob_Column_List">
+    case_explain
+  </sql>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="ResultMapWithBLOBs">
+        select
+        <include refid="Base_Column_List"/>
+        ,
+        <include refid="Blob_Column_List"/>
+        from test_case
+        where id = #{id,jdbcType=INTEGER} and deleted = 0
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from test_case
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+    <insert id="insert" parameterType="com.xiaoju.hallowmas.entity.TestCaseObject" keyProperty="id">
+    insert into test_case (id, case_name, status,gmt_modified, gmt_create, deleted, ownner, case_explain)
+    values (#{id,jdbcType=INTEGER}, #{caseName,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER}, 
+      now(), now(), #{deleted,jdbcType=TINYINT},
+      #{ownner,jdbcType=VARCHAR}, #{explain,jdbcType=LONGVARCHAR})
+  </insert>
+    <insert id="insertSelective" parameterType="com.xiaoju.hallowmas.entity.TestCaseObject">
+        insert into test_case
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="caseName != null">
+                case_name,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="gmtModified != null">
+                gmt_modified,
+            </if>
+            <if test="gmtCreate != null">
+                gmt_create,
+            </if>
+            <if test="deleted != null">
+                deleted,
+            </if>
+            <if test="ownner != null">
+                ownner,
+            </if>
+            <if test="explain != null">
+                case_explain,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="caseName != null">
+                #{caseName,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                #{status,jdbcType=INTEGER},
+            </if>
+            <if test="gmtModified != null">
+                now(),
+            </if>
+            <if test="gmtCreate != null">
+                now(),
+            </if>
+            <if test="deleted != null">
+                #{deleted,jdbcType=TINYINT},
+            </if>
+            <if test="ownner != null">
+                #{ownner,jdbcType=VARCHAR},
+            </if>
+            <if test="explain != null">
+                #{explain,jdbcType=LONGVARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.xiaoju.hallowmas.entity.TestCaseObject">
+        update test_case
+        <set>
+            <if test="caseName != null">
+                case_name = #{caseName,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                status = #{status,jdbcType=INTEGER},
+            </if>
+            <if test="gmtModified != null">
+                gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+            </if>
+            <if test="gmtCreate != null">
+                gmt_create = #{gmtCreate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="deleted != null">
+                deleted = #{deleted,jdbcType=TINYINT},
+            </if>
+            <if test="ownner != null">
+                ownner = #{ownner,jdbcType=VARCHAR},
+            </if>
+            <if test="explain != null">
+                case_explain = #{explain,jdbcType=LONGVARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+    <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.xiaoju.hallowmas.entity.TestCaseObject">
+    update test_case
+    set case_name = #{caseName,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      gmt_modified = now(),
+      deleted = #{deleted,jdbcType=TINYINT},
+      ownner = #{ownner,jdbcType=VARCHAR},
+      case_explain = #{explain,jdbcType=LONGVARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+    <update id="updateByPrimaryKey" parameterType="com.xiaoju.hallowmas.entity.TestCaseObject">
+    update test_case
+    set case_name = #{caseName,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      gmt_modified = now(),
+      deleted = #{deleted,jdbcType=TINYINT},
+      ownner = #{ownner,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+    <!-- 查询所有 -->
+    <select id="listTestCase" parameterType="com.xiaoju.hallowmas.entity.TestCaseObject" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from test_case where deleted = 0 order by gmt_modified desc
+    </select>
+</mapper>
