@@ -1,0 +1,138 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaoju.basetech.dao.CoverageReportDao">
+    <resultMap id="coverageReportEntity" type="com.xiaoju.basetech.entity.CoverageReportEntity">
+        <id column="id" property="id"/>
+        <result column="job_record_uuid" property="uuid"/>
+        <result column="request_status" property="requestStatus"/>
+        <result column="type" property="type"/>
+        <result column="giturl" property="gitUrl"/>
+        <result column="base_version" property="baseVersion"/>
+        <result column="now_version" property="nowVersion"/>
+        <result column="sub_module" property="subModule"/>
+        <result column="err_msg" property="errMsg"/>
+        <result column="diffmethod" property="diffMethod"/>
+        <result column="report_url" property="reportUrl"/>
+        <result column="line_coverage" property="lineCoverage"/>
+        <result column="branch_coverage" property="branchCoverage"/>
+        <result column="now_local_path" property="nowLocalPath"/>
+        <result column="base_local_path" property="baseLocalPath"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="from" property="from"/>
+        <result column="log_file" property="logFile"/>
+
+    </resultMap>
+
+    <select id="queryCoverageReportByUuid" parameterType="java.lang.String" resultMap="coverageReportEntity">
+        SELECT * FROM diff_coverage_report
+        WHERE `job_record_uuid`=#{uuid}
+        limit 1
+    </select>
+
+    <select id="queryCoverByStatus" parameterType="java.lang.Integer" resultMap="coverageReportEntity">
+        SELECT * from diff_coverage_report
+        <where>
+            <if test="#{triggerStatus} != null">
+                `request_status`=#{triggerStatus}
+            </if>
+        </where>
+        AND `from`=#{from}
+        ORDER BY `update_time`
+        asc
+        limit #{num}
+    </select>
+
+    <insert id="insertCoverageReportById" parameterType="com.xiaoju.basetech.entity.CoverageReportEntity">
+        INSERT INTO diff_coverage_report(
+        `job_record_uuid`,
+        `request_status`,
+        `type`,
+        `giturl`,
+        `err_msg`,
+        `sub_module`,
+        `base_version`,
+        `now_version`,
+        `now_local_path` ,
+        `base_local_path`,
+        `from`
+        )VALUES (
+        #{coverageReportEntity.uuid},
+        #{coverageReportEntity.requestStatus},
+        #{coverageReportEntity.type},
+        #{coverageReportEntity.gitUrl},
+        #{coverageReportEntity.errMsg},
+        #{coverageReportEntity.subModule},
+        #{coverageReportEntity.baseVersion},
+        #{coverageReportEntity.nowVersion},
+        #{coverageReportEntity.nowLocalPath},
+        #{coverageReportEntity.baseLocalPath},
+        #{coverageReportEntity.from}
+        )
+    </insert>
+
+
+    <update id="updateCoverageReportByDiffMethods" parameterType="com.xiaoju.basetech.entity.CoverageReportEntity">
+        UPDATE diff_coverage_report
+        SET
+        `request_status`=#{coverageReportEntity.requestStatus},
+        `err_msg`=#{coverageReportEntity.errMsg},
+        `diffmethod`=#{coverageReportEntity.diffMethod},
+        WHERE job_record_uuid=#{coverageReportEntity.uuid}
+    </update>
+    <update id="casUpdateByStatus">
+        UPDATE diff_coverage_report
+        SET
+        `request_status`=#{newStatus}
+        WHERE `request_status`=#{expectStatus}
+        AND `job_record_uuid`=#{uuid}
+        limit 1
+    </update>
+
+    <update id="casUpdateStatusByExpireTime">
+        UPDATE diff_coverage_report
+        SET
+        `request_status`=0,
+        `diffmethod`='',
+        `report_url`='',
+        `line_coverage`=-1,
+        `branch_coverage`=-1,
+        `err_msg`='',
+        `log_file`=''
+        WHERE `update_time`&lt; #{expireTime}
+        AND `request_status`&gt;0
+        AND `request_status`&lt;200
+        AND `from`=1
+        limit 1
+    </update>
+
+
+    <update id="updateCoverageReportByReport" parameterType="com.xiaoju.basetech.entity.CoverageReportEntity">
+        UPDATE diff_coverage_report
+        SET
+        `request_status`=#{coverageReportEntity.requestStatus},
+        `err_msg`=#{coverageReportEntity.errMsg},
+        `line_coverage`=#{coverageReportEntity.lineCoverage},
+        `branch_coverage`=#{coverageReportEntity.branchCoverage},
+        `report_url`=#{coverageReportEntity.reportUrl},
+        `diffmethod`=#{coverageReportEntity.diffMethod},
+        `log_file`=#{coverageReportEntity.logFile},
+        `now_local_path`=#{coverageReportEntity.nowLocalPath},
+        `update_time`=NOW()
+        WHERE job_record_uuid=#{coverageReportEntity.uuid}
+    </update>
+    <update id="casUpdateStatusById">
+        UPDATE diff_coverage_report
+        SET
+        `request_status`=#{requestStatus}
+        <where>
+            <if test="#{id} != null">
+                id=#{id}
+            </if>
+            and
+            <if test="#{expectedStatus} != null">
+                `request_status`=#{expectedStatus}
+            </if>
+        </where>
+    </update>
+</mapper>

@@ -18,8 +18,8 @@
         </commentGenerator>
 
         <jdbcConnection driverClass="com.mysql.jdbc.Driver"
-                        connectionURL="jdbc:mysql://10.179.133.165:36360/test_case_mgt" userId="case_user"
-                        password="case_passwd">
+                        connectionURL="${connectionURL}" userId="${userId}"
+                        password="${password}">
         </jdbcConnection>
 
         <javaTypeResolver>
@@ -27,7 +27,7 @@
         </javaTypeResolver>
 
         <!-- generate Model -->
-        <javaModelGenerator targetPackage="com.xiaoju.hallowmas.entity"
+        <javaModelGenerator targetPackage="com.xiaoju.basetech.entity"
                             targetProject="${entity.target.dir}">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
@@ -42,13 +42,13 @@
 
         <!-- 自动生成mapper接口, 可以是 ANNOTATEDMAPPER(注解), XMLMAPPER(xml), MIXEDMAPPER(不知道) -->
         <javaClientGenerator type="XMLMAPPER"
-                             targetPackage="com.xiaoju.hallowmas.mapper"
+                             targetPackage="com.xiaoju.basetech.mapper"
                              targetProject="${entity.target.dir}">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
-        <table tableName="case" domainObjectName="TestCase" enableCountByExample="false"
+        <table tableName="product_line" domainObjectName="ProductLine" enableCountByExample="false"
                enableUpdateByExample="false"
                enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"/>
 
     </context>
-</generatorConfiguration>  
+</generatorConfiguration>

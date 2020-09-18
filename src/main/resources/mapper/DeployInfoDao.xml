@@ -1,0 +1,35 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaoju.basetech.dao.DeployInfoDao">
+    <resultMap id="deployInfoEntity" type="com.xiaoju.basetech.entity.DeployInfoEntity">
+        <result column="job_record_uuid" property="uuid"/>
+        <result column="address" property="address"/>
+        <result column="port" property="port"/>
+        <result column="code_path" property="codePath"/>
+        <result column="child_modules" property="childModules"/>
+    </resultMap>
+
+    <select id="queryDeployId" parameterType="java.lang.String" resultMap="deployInfoEntity">
+        SELECT * FROM diff_deploy_info
+        WHERE `job_record_uuid`=#{uuid}
+    </select>
+
+    <insert id="insertDeployId">
+        INSERT INTO diff_deploy_info(
+        `job_record_uuid`,
+        `address`,
+        `port`
+        )VALUES (
+        #{uuid},
+        #{address},
+        #{port}
+        )
+    </insert>
+    <update id="updateDeployInfo" parameterType="com.xiaoju.basetech.entity.DeployInfoEntity">
+        UPDATE diff_deploy_info
+        SET
+        `code_path`=#{deployInfoEntity.codePath},
+        `child_modules`=#{deployInfoEntity.childModules}
+        WHERE job_record_uuid=#{deployInfoEntity.uuid}
+    </update>
+</mapper>
