@@ -1,8 +1,10 @@
 package com.xiaoju.basetech.config;
 
-import com.didichuxing.chefuqa.common.response.ErrorCode;
-import com.didichuxing.chefuqa.common.response.HttpResult;
-import com.didichuxing.chefuqa.common.response.ResponseException;
+
+
+import com.xiaoju.basetech.entity.ErrorCode;
+import com.xiaoju.basetech.entity.HttpResult;
+import com.xiaoju.basetech.entity.ResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;

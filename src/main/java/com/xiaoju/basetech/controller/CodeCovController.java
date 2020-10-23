@@ -1,10 +1,7 @@
 package com.xiaoju.basetech.controller;
 
-import com.didichuxing.chefuqa.common.response.HttpResult;
-import com.xiaoju.basetech.entity.EnvCoverRequest;
-import com.xiaoju.basetech.entity.UnitCoverRequest;
-import com.xiaoju.basetech.entity.CoverResult;
-import com.xiaoju.basetech.entity.LocalHostRequestParam;
+
+import com.xiaoju.basetech.entity.*;
 import com.xiaoju.basetech.service.CodeCovService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
