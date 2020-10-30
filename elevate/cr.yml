@@ -1,6 +1,0 @@
-# ---------refer用来标识此项目评审入口是OneExperience, 请勿改动--------- #
-refer: OE
-force: master
-strategy: ownerOne
-owners: guojinqiong
-reviewers: 
