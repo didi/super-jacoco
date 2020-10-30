@@ -51,4 +51,4 @@
 
 ### 联系我们
 #### 微信群：super-jacoco技术支持群(添加管理员二维码邀请进群)
-![image](https://github.com/didichuxing/super-jacoco/master/管理员微信二维码.png)
+![image](https://github.com/didichuxing/super-jacoco/blob/master/%E7%AE%A1%E7%90%86%E5%91%98%E5%BE%AE%E4%BF%A1%E4%BA%8C%E7%BB%B4%E7%A0%81.png)
