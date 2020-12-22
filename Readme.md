@@ -39,15 +39,15 @@
 ###### 1、启动覆盖率收集
 	 URL：/cov/triggerEnvCov
 	 调用方法：POST
-	 参数（body方式传入）：
+	 参数（body方式传入）：{"uuid":"uuid","type":1,"gitUrl":"git@git","subModule":"","baseVersion":"master","nowVersion":"feature"，"address":"127.0.0.1","port":"8088"}
 	 返回：{"code":200,"data":true,"msg":"msg"}
-	 备注：
+	 备注：IP和port为模块部署服务器的IP和端口，在dump jacoco.exec时使用，需要提前把org.jacoco.agent-0.8.5-runtime.jar包拷贝到服务器:/home/xxx/目录，服务启动时需要添加启动参数： -javaagent:/home/xxx/org.jacoco.agent-0.8.5-runtime.jar=includes=*,output=tcpserver,address=*,port=18513
 ###### 2、获取覆盖率结果
 	 URL：/cov/getEnvCoverResult
 	 调用方法：GET
 	 参数：uuid(String)
-	 返回：{"uuid":"uuid","type":1,"gitUrl":"git@git","subModule":"","baseVersion":"master","nowVersion":"feature"，"ip":"127.0.0.1","port":"8088"}
-	 备注：IP和port为模块部署服务器的IP和端口，在dump jacoco.exec时使用，需要提前把org.jacoco.agent-0.8.5-runtime.jar包拷贝到服务器:/home/xxx/目录，服务启动时需要添加启动参数： -javaagent:/home/xxx/org.jacoco.agent-0.8.5-runtime.jar=includes=*,output=tcpserver,address=*,port=18513
+	 返回：{"code":200,"data":{"coverStatus":1,"errMsg":"msg","lineCoverage":100.0,"branchCoverage":100.0,"logFile":"file content","reportUrl":"http://"},"msg":"msg"}
+	 备注：
 
 ### 联系我们
 #### 微信群：super-jacoco技术支持群(添加管理员二维码邀请进群)
