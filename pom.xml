@@ -30,32 +30,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.ext</groupId>
-            <artifactId>springframework-ext-common</artifactId>
-            <version>1.0.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ext</groupId>
-            <artifactId>springframework-ext-domain</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ext</groupId>
-            <artifactId>springframework-ext-client</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ext</groupId>
-            <artifactId>springframework-ext-biz</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <groupId>org.jodd</groupId>
+            <artifactId>jodd-core</artifactId>
+            <version>5.1.6</version>
         </dependency>
         <dependency>
             <groupId>dom4j</groupId>
@@ -72,11 +49,6 @@
             <artifactId>asm</artifactId>
             <version>7.1</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
