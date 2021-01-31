@@ -110,7 +110,7 @@ public class CodeCoverageScheduleJob {
                         }
                     }
                     codeCovService.calculateEnvCov(o);
-                    log.info("分析成功成功uuid={}", o.getUuid());
+                    log.info("任务执行结束，uuid={}", o.getUuid());
                 }else{
                     log.info("任务已被领取，uuid={}",o.getUuid());
                     return;
