@@ -329,6 +329,7 @@ public class CodeCovServiceImpl implements CodeCovService {
      */
     @Override
     public void calculateEnvCov(CoverageReportEntity coverageReport) {
+        String logFile = coverageReport.getLogFile().replace(LocalIpUtils.getTomcatBaseUrl() + "logs/", LOG_PATH);
         String uuid = coverageReport.getUuid();
         DeployInfoEntity deployInfoEntity = deployInfoDao.queryDeployId(uuid);
         String reportName = "ManualDiffCoverage";
@@ -360,7 +361,7 @@ public class CodeCovServiceImpl implements CodeCovService {
                     builder.append("--diffFile " + coverageReport.getDiffMethod());
 
                 }
-                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName);
+                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName  + ">>" + logFile);
                 int covExitCode = CmdExecutor.executeCmd(new String[]{"cd " + deployInfoEntity.getCodePath() + "&&" + builder.toString()}, CMD_TIMEOUT);
                 File reportFile = new File(deployInfoEntity.getCodePath() + "/jacocoreport/index.html");
                 if (covExitCode == 0 && reportFile.exists()) {
@@ -411,7 +412,7 @@ public class CodeCovServiceImpl implements CodeCovService {
                         } else {
                             buildertmp.append(" --diffFile " + coverageReport.getDiffMethod());
                         }
-                        buildertmp.append(" --html jacocoreport/" + module + " --encoding utf-8 --name " + reportName);
+                        buildertmp.append(" --html jacocoreport/" + module + " --encoding utf-8 --name " + reportName + ">>" + logFile);
                         littleExitCode += CmdExecutor.executeCmd(new String[]{"cd " + deployInfoEntity.getCodePath() + "&&" + buildertmp.toString()}, CMD_TIMEOUT);
                         if (littleExitCode == 0) {
                             childReportList.add(deployInfoEntity.getCodePath() + "/jacocoreport/" + module + "/index.html");
@@ -515,7 +516,7 @@ public class CodeCovServiceImpl implements CodeCovService {
                     builder.append("--diffFile " + diffFiles);
 
                 }
-                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName);
+                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName );
                 log.info("builder={}", builder);
                 int covExitCode = CmdExecutor.executeCmd(new String[]{"cd " + localHostRequestParam.getNowPath() + "&&" + builder.toString()}, CMD_TIMEOUT);
                 File reportFile = new File(localHostRequestParam.getNowPath() + "jacocoreport/index.html");
