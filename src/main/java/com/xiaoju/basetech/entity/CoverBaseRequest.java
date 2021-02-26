@@ -24,8 +24,8 @@ public class CoverBaseRequest {
     @NotBlank(message = "gitUrl不能为空")
     private String gitUrl;
 
-    @NotBlank(message = "baseVersion不能为空")
-    private String baseVersion;
+    //@NotBlank(message = "baseVersion不能为空")
+    private String baseVersion="master";
 
     @NotBlank(message = "nowVersion不能为空")
     private String nowVersion;

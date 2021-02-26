@@ -1,3 +1,4 @@
+CREATE DATABASE `super-jacoco` DEFAULT CHARACTER SET utf8 COLLATE utf8_bin ;
 CREATE TABLE `diff_coverage_report` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `job_record_uuid` varchar(80) NOT NULL COMMENT '请求唯一标识码',
@@ -20,7 +21,7 @@ CREATE TABLE `diff_coverage_report` (
   `log_file` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`job_record_uuid`),
   KEY `id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15666 DEFAULT CHARSET=utf8 COMMENT='增量代码覆盖率'
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COMMENT='增量代码覆盖率';
 
 CREATE TABLE `diff_deploy_info` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
@@ -31,7 +32,7 @@ CREATE TABLE `diff_deploy_info` (
   `child_modules` varchar(1000) NOT NULL DEFAULT '' COMMENT '项目子模块名称',
   PRIMARY KEY (`job_record_uuid`),
   KEY `id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4250 DEFAULT CHARSET=utf8 COMMENT='服务部署地址'
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COMMENT='服务部署地址';
 
 
 
