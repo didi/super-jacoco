@@ -31,6 +31,13 @@ public interface CodeCovService {
     void triggerEnvCov(EnvCoverRequest envCoverRequest);
 
     /**
+     * 克隆代码&&编译代码
+     *
+     * @param coverageReport
+     */
+    void cloneAndCompileCode(CoverageReportEntity coverageReport);
+
+    /**
      * 获取diff
      * @param coverageReport
      */

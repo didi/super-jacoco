@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -101,21 +102,29 @@ public class CodeCoverageScheduleJob {
                         Constants.JobStatus.WAITING.val(), o.getUuid());
                 // 代码目录不存在说明代码不在这一台机器上
                 if (num > 0) {
+                    // 代码目录不存在说明代码不在这一台机器上，这里会重新下载代码编译，此时若代码有更新，会出现统计代码和本地class不一致
+                    // 建议使用commitID替换branch来避免这个问题
                     if (!new File(o.getNowLocalPath()).exists()) {
-                        log.info("others execute exec task uuid={}", o.getUuid());
-                        codeCovService.calculateDeployDiffMethods(o);
-                        if (o.getRequestStatus() != Constants.JobStatus.ADDMODULE_DONE.val()) {
-                            log.info("{}计算覆盖率失败uuid={}", Thread.currentThread().getName(), o.getUuid());
+                        codeCovService.cloneAndCompileCode(o);
+                        if (o.getRequestStatus() != Constants.JobStatus.COMPILE_DONE.val()) {
+                            log.info("{}计算覆盖率具体步骤...编译失败uuid={}", Thread.currentThread().getName(), o.getUuid());
                             return;
                         }
+                        log.info("others execute exec task uuid={}", o.getUuid());
+                        if (o.getType() == Constants.ReportType.DIFF.val() && !StringUtils.isEmpty(o.getDiffMethod())) {
+                            codeCovService.calculateDeployDiffMethods(o);
+                            if (o.getRequestStatus() != Constants.JobStatus.DIFF_METHOD_DONE.val()) {
+                                log.info("{}计算覆盖率具体步骤...计算增量代码失败，uuid={}", Thread.currentThread().getName(), o.getUuid());
+                                return;
+                            }
+                        }
+                        codeCovService.calculateEnvCov(o);
+                        log.info("分析成功成功uuid={}", o.getUuid());
+                    } else {
+                        log.info("任务已被领取，uuid={}", o.getUuid());
+                        return;
                     }
-                    codeCovService.calculateEnvCov(o);
-                    log.info("分析成功成功uuid={}", o.getUuid());
-                }else{
-                    log.info("任务已被领取，uuid={}",o.getUuid());
-                    return;
                 }
-
             } catch (Exception e) {
                 log.error("uuid={}拉取exec文件异常", o.getUuid(), e);
             }

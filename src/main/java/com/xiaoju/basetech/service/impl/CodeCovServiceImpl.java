@@ -221,25 +221,6 @@ public class CodeCovServiceImpl implements CodeCovService {
 
     @Override
     public void calculateDeployDiffMethods(CoverageReportEntity coverageReport) {
-        // 下载代码
-        coverageReport.setRequestStatus(Constants.JobStatus.CLONING.val());
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        codeCloneExecutor.cloneCode(coverageReport);
-        // 更新状态
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.CLONE_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...克隆失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
-            return;
-        }
-        //编译代码
-        coverageReport.setRequestStatus(Constants.JobStatus.COMPILING.val());
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        codeCompilerExecutor.compileCode(coverageReport);
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.COMPILE_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...编译失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
-            return;
-        }
 
         DeployInfoEntity deployInfo = new DeployInfoEntity();
         deployInfo.setUuid(coverageReport.getUuid());
@@ -258,21 +239,25 @@ public class CodeCovServiceImpl implements CodeCovService {
         coverageReportDao.updateCoverageReportByReport(coverageReport);
         diffMethodsCalculator.executeDiffMethods(coverageReport);
         coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.DIFF_METHOD_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...计算增量方法uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
-            return;
-        }
-        // 添加集成模块
-        coverageReport.setRequestStatus(Constants.JobStatus.ADDMODULING.val());
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        mavenModuleUtil.addMavenModule(coverageReport);
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.ADDMODULE_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...添加集成模块失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
-            return;
-        }
     }
-
+    @Override
+    public void cloneAndCompileCode(CoverageReportEntity coverageReport) {
+        // 下载代码
+        coverageReport.setRequestStatus(Constants.JobStatus.CLONING.val());
+        coverageReportDao.updateCoverageReportByReport(coverageReport);
+        codeCloneExecutor.cloneCode(coverageReport);
+        // 更新状态
+        coverageReportDao.updateCoverageReportByReport(coverageReport);
+        if (coverageReport.getRequestStatus() != Constants.JobStatus.CLONE_DONE.val()) {
+            log.info("{}计算覆盖率具体步骤...克隆失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+            return;
+        }
+        //编译代码
+        coverageReport.setRequestStatus(Constants.JobStatus.COMPILING.val());
+        coverageReportDao.updateCoverageReportByReport(coverageReport);
+        codeCompilerExecutor.compileCode(coverageReport);
+        coverageReportDao.updateCoverageReportByReport(coverageReport);
+    }
     /**
      * @param envCoverRequest
      */
@@ -308,10 +293,17 @@ public class CodeCovServiceImpl implements CodeCovService {
             coverageReportDao.insertCoverageReportById(coverageReport);
             deployInfoDao.insertDeployId(envCoverRequest.getUuid(), envCoverRequest.getAddress(), envCoverRequest.getPort());
             new Thread(() -> {
-                calculateDeployDiffMethods(coverageReport);
-                if (coverageReport.getRequestStatus() != Constants.JobStatus.ADDMODULE_DONE.val()) {
-                    log.info("{}计算覆盖率具体步骤...克隆失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+                cloneAndCompileCode(coverageReport);
+                if (coverageReport.getRequestStatus() != Constants.JobStatus.COMPILE_DONE.val()) {
+                    log.info("{}计算覆盖率具体步骤...编译失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
                     return;
+                }
+                if (coverageReport.getType() == Constants.ReportType.DIFF.val()) {
+                    calculateDeployDiffMethods(coverageReport);
+                    if (coverageReport.getRequestStatus() != Constants.JobStatus.DIFF_METHOD_DONE.val()) {
+                        log.info("{}计算覆盖率具体步骤...计算增量代码失败，uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+                        return;
+                    }
                 }
                 calculateEnvCov(coverageReport);
             }).start();
