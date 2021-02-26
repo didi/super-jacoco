@@ -24,17 +24,25 @@ public interface CodeCovService {
     CoverResult getCoverResult(String uuid);
 
     /**
-     *
      * @param envCoverRequest
      */
 
     void triggerEnvCov(EnvCoverRequest envCoverRequest);
 
     /**
+     * 克隆代码&&编译代码
+     *
+     * @param coverageReport
+     */
+    void cloneAndCompileCode(CoverageReportEntity coverageReport);
+
+    /**
      * 获取diff
+     *
      * @param coverageReport
      */
     void calculateDeployDiffMethods(CoverageReportEntity coverageReport);
+
     /**
      * 计算单元测试覆盖率
      *
@@ -51,6 +59,7 @@ public interface CodeCovService {
 
     /**
      * 手动获取手工测试覆盖率
+     *
      * @param localHostRequestParam
      * @return
      * @throws Exception

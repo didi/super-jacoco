@@ -1,7 +1,6 @@
 package com.xiaoju.basetech.service.impl;
 
 
-
 import com.google.common.base.Preconditions;
 import com.xiaoju.basetech.dao.CoverageReportDao;
 import com.xiaoju.basetech.dao.DeployInfoDao;
@@ -196,7 +195,7 @@ public class CodeCovServiceImpl implements CodeCovService {
             return;
         }
 
-        //复制报告到tomcat目录
+        //复制报告到指定目录
         coverageReport.setRequestStatus(Constants.JobStatus.REPORTCOPYING.val());
         coverageReportDao.updateCoverageReportByReport(coverageReport);
         reportCopyExecutor.copyReport(coverageReport);
@@ -221,25 +220,6 @@ public class CodeCovServiceImpl implements CodeCovService {
 
     @Override
     public void calculateDeployDiffMethods(CoverageReportEntity coverageReport) {
-        // 下载代码
-        coverageReport.setRequestStatus(Constants.JobStatus.CLONING.val());
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        codeCloneExecutor.cloneCode(coverageReport);
-        // 更新状态
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.CLONE_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...克隆失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
-            return;
-        }
-        //编译代码
-        coverageReport.setRequestStatus(Constants.JobStatus.COMPILING.val());
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        codeCompilerExecutor.compileCode(coverageReport);
-        coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.COMPILE_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...编译失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
-            return;
-        }
 
         DeployInfoEntity deployInfo = new DeployInfoEntity();
         deployInfo.setUuid(coverageReport.getUuid());
@@ -258,19 +238,25 @@ public class CodeCovServiceImpl implements CodeCovService {
         coverageReportDao.updateCoverageReportByReport(coverageReport);
         diffMethodsCalculator.executeDiffMethods(coverageReport);
         coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.DIFF_METHOD_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...计算增量方法uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+    }
+
+    @Override
+    public void cloneAndCompileCode(CoverageReportEntity coverageReport) {
+        // 下载代码
+        coverageReport.setRequestStatus(Constants.JobStatus.CLONING.val());
+        coverageReportDao.updateCoverageReportByReport(coverageReport);
+        codeCloneExecutor.cloneCode(coverageReport);
+        // 更新状态
+        coverageReportDao.updateCoverageReportByReport(coverageReport);
+        if (coverageReport.getRequestStatus() != Constants.JobStatus.CLONE_DONE.val()) {
+            log.info("{}计算覆盖率具体步骤...克隆失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
             return;
         }
-        // 添加集成模块
-        coverageReport.setRequestStatus(Constants.JobStatus.ADDMODULING.val());
+        //编译代码
+        coverageReport.setRequestStatus(Constants.JobStatus.COMPILING.val());
         coverageReportDao.updateCoverageReportByReport(coverageReport);
-        mavenModuleUtil.addMavenModule(coverageReport);
+        codeCompilerExecutor.compileCode(coverageReport);
         coverageReportDao.updateCoverageReportByReport(coverageReport);
-        if (coverageReport.getRequestStatus() != Constants.JobStatus.ADDMODULE_DONE.val()) {
-            log.info("{}计算覆盖率具体步骤...添加集成模块失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
-            return;
-        }
     }
 
     /**
@@ -286,7 +272,7 @@ public class CodeCovServiceImpl implements CodeCovService {
             coverageReport.setUuid(envCoverRequest.getUuid());
             coverageReport.setGitUrl(envCoverRequest.getGitUrl());
             coverageReport.setNowVersion(envCoverRequest.getNowVersion());
-            coverageReport.setType(Constants.ReportType.DIFF.val());
+            coverageReport.setType(envCoverRequest.getType());
 
             if (!StringUtils.isEmpty(envCoverRequest.getBaseVersion())) {
                 coverageReport.setBaseVersion(envCoverRequest.getBaseVersion());
@@ -308,10 +294,17 @@ public class CodeCovServiceImpl implements CodeCovService {
             coverageReportDao.insertCoverageReportById(coverageReport);
             deployInfoDao.insertDeployId(envCoverRequest.getUuid(), envCoverRequest.getAddress(), envCoverRequest.getPort());
             new Thread(() -> {
-                calculateDeployDiffMethods(coverageReport);
-                if (coverageReport.getRequestStatus() != Constants.JobStatus.ADDMODULE_DONE.val()) {
-                    log.info("{}计算覆盖率具体步骤...克隆失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+                cloneAndCompileCode(coverageReport);
+                if (coverageReport.getRequestStatus() != Constants.JobStatus.COMPILE_DONE.val()) {
+                    log.info("{}计算覆盖率具体步骤...编译失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
                     return;
+                }
+                if (coverageReport.getType() == Constants.ReportType.DIFF.val()) {
+                    calculateDeployDiffMethods(coverageReport);
+                    if (coverageReport.getRequestStatus() != Constants.JobStatus.DIFF_METHOD_DONE.val()) {
+                        log.info("{}计算覆盖率具体步骤...计算增量代码失败，uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+                        return;
+                    }
                 }
                 calculateEnvCov(coverageReport);
             }).start();
@@ -361,7 +354,7 @@ public class CodeCovServiceImpl implements CodeCovService {
                     builder.append("--diffFile " + coverageReport.getDiffMethod());
 
                 }
-                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName  + ">>" + logFile);
+                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName + ">>" + logFile);
                 int covExitCode = CmdExecutor.executeCmd(new String[]{"cd " + deployInfoEntity.getCodePath() + "&&" + builder.toString()}, CMD_TIMEOUT);
                 File reportFile = new File(deployInfoEntity.getCodePath() + "/jacocoreport/index.html");
                 if (covExitCode == 0 && reportFile.exists()) {
@@ -407,10 +400,8 @@ public class CodeCovServiceImpl implements CodeCovService {
                         StringBuilder buildertmp = new StringBuilder("java -jar " + JACOCO_PATH + " report ./jacoco.exec");
                         buildertmp.append(" --sourcefiles ./" + module + "/src/main/java/");
                         buildertmp.append(" --classfiles ./" + module + "/target/classes/com/");
-                        if (null == coverageReport.getDiffMethod() || coverageReport.getDiffMethod().equals("")) {
-                            buildertmp.append(" --diffFile=");
-                        } else {
-                            buildertmp.append(" --diffFile " + coverageReport.getDiffMethod());
+                        if (!StringUtils.isEmpty(coverageReport.getDiffMethod())) {
+                            builder.append("--diffFile " + coverageReport.getDiffMethod());
                         }
                         buildertmp.append(" --html jacocoreport/" + module + " --encoding utf-8 --name " + reportName + ">>" + logFile);
                         littleExitCode += CmdExecutor.executeCmd(new String[]{"cd " + deployInfoEntity.getCodePath() + "&&" + buildertmp.toString()}, CMD_TIMEOUT);
@@ -516,7 +507,7 @@ public class CodeCovServiceImpl implements CodeCovService {
                     builder.append("--diffFile " + diffFiles);
 
                 }
-                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName );
+                builder.append(" --html ./jacocoreport/ --encoding utf-8 --name " + reportName);
                 log.info("builder={}", builder);
                 int covExitCode = CmdExecutor.executeCmd(new String[]{"cd " + localHostRequestParam.getNowPath() + "&&" + builder.toString()}, CMD_TIMEOUT);
                 File reportFile = new File(localHostRequestParam.getNowPath() + "jacocoreport/index.html");
