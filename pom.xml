@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.core</artifactId>
-            <version>0.8.4</version>
+            <version>0.8.6</version>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
