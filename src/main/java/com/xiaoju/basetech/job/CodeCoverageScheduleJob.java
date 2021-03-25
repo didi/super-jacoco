@@ -109,20 +109,20 @@ public class CodeCoverageScheduleJob {
                             log.info("{}计算覆盖率具体步骤...编译失败uuid={}", Thread.currentThread().getName(), o.getUuid());
                             return;
                         }
-                        log.info("others execute exec task uuid={}", o.getUuid());
-                        if (o.getType() == Constants.ReportType.DIFF.val() && !StringUtils.isEmpty(o.getDiffMethod())) {
-                            codeCovService.calculateDeployDiffMethods(o);
-                            if (o.getRequestStatus() != Constants.JobStatus.DIFF_METHOD_DONE.val()) {
-                                log.info("{}计算覆盖率具体步骤...计算增量代码失败，uuid={}", Thread.currentThread().getName(), o.getUuid());
-                                return;
-                            }
-                        }
-                        codeCovService.calculateEnvCov(o);
-                        log.info("任务执行结束，uuid={}", o.getUuid());
-                    } else {
-                        log.info("任务已被领取，uuid={}", o.getUuid());
-                        return;
                     }
+                    log.info("others execute exec task uuid={}", o.getUuid());
+                    if (o.getType() == Constants.ReportType.DIFF.val() && StringUtils.isEmpty(o.getDiffMethod())) {
+                        codeCovService.calculateDeployDiffMethods(o);
+                        if (o.getRequestStatus() != Constants.JobStatus.DIFF_METHOD_DONE.val()) {
+                            log.info("{}计算覆盖率具体步骤...计算增量代码失败，uuid={}", Thread.currentThread().getName(), o.getUuid());
+                            return;
+                        }
+                    }
+                    codeCovService.calculateEnvCov(o);
+                    log.info("任务执行结束，uuid={}", o.getUuid());
+                } else {
+                    log.info("任务已被领取，uuid={}", o.getUuid());
+                    return;
                 }
 
             } catch (Exception e) {
