@@ -10,6 +10,7 @@ import com.xiaoju.basetech.util.*;
 import jodd.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
+import org.jacoco.core.tools.ExecFileLoader;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -18,9 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.xiaoju.basetech.util.Constants.*;
 
@@ -257,6 +261,25 @@ public class CodeCovServiceImpl implements CodeCovService {
         coverageReportDao.updateCoverageReportByReport(coverageReport);
         codeCompilerExecutor.compileCode(coverageReport);
         coverageReportDao.updateCoverageReportByReport(coverageReport);
+        if (coverageReport.getRequestStatus() != JobStatus.COMPILE_DONE.val()) {
+            log.info("{}计算覆盖率具体步骤...编译失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+            return;
+        }
+        DeployInfoEntity deployInfo = new DeployInfoEntity();
+        deployInfo.setUuid(coverageReport.getUuid());
+        deployInfo.setCodePath(coverageReport.getNowLocalPath());
+        String pomPath = deployInfo.getCodePath() + "/pom.xml";
+        ArrayList<String> moduleList = MavenModuleUtil.getValidModules(pomPath);
+        StringBuilder moduleNames = new StringBuilder("");
+        for (String module : moduleList) {
+            moduleNames.append(module + ",");
+        }
+        deployInfo.setChildModules(moduleNames.toString());
+        int i=deployInfoDao.updateDeployInfo(deployInfo);
+        if(i<1){
+            log.info("{}计算覆盖率具体步骤...获取ChildModules失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
+            return;
+        }
     }
 
     /**
@@ -602,6 +625,21 @@ public class CodeCovServiceImpl implements CodeCovService {
         } catch (Exception e) {
             log.error("uuid={}获取jacoco.exec 文件发生未知错误", localHostRequestParam.getUuid(), e);
             throw new RuntimeException(e.getMessage());
+        }
+    }
+    private void mergeExec(List<String> ExecFiles,String NewFileName){
+        ExecFileLoader execFileLoader=new ExecFileLoader();
+        try{
+            for(String ExecFile:ExecFiles){
+                execFileLoader.load(new File(ExecFile));
+            }
+        }catch (Exception e){
+            log.error("ExecFiles 合并失败 errorMessege is {}",e.fillInStackTrace());
+        }
+        try{
+        execFileLoader.save(new File(NewFileName),false);}
+        catch (Exception e){
+            log.error("ExecFiles 保存失败 errorMessege is {}",e.fillInStackTrace());
         }
     }
 }
