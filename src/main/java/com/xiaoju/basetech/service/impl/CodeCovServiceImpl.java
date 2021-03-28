@@ -224,19 +224,6 @@ public class CodeCovServiceImpl implements CodeCovService {
 
     @Override
     public void calculateDeployDiffMethods(CoverageReportEntity coverageReport) {
-
-        DeployInfoEntity deployInfo = new DeployInfoEntity();
-        deployInfo.setUuid(coverageReport.getUuid());
-        deployInfo.setCodePath(coverageReport.getNowLocalPath());
-        String pomPath = deployInfo.getCodePath() + "/pom.xml";
-        ArrayList<String> moduleList = MavenModuleUtil.getValidModules(pomPath);
-        StringBuilder moduleNames = new StringBuilder("");
-        for (String module : moduleList) {
-            moduleNames.append(module + ",");
-        }
-        deployInfo.setChildModules(moduleNames.toString());
-        deployInfoDao.updateDeployInfo(deployInfo);
-
         // 计算增量方法
         coverageReport.setRequestStatus(Constants.JobStatus.DIFF_METHODS_EXECUTING.val());
         coverageReportDao.updateCoverageReportByReport(coverageReport);
@@ -275,8 +262,8 @@ public class CodeCovServiceImpl implements CodeCovService {
             moduleNames.append(module + ",");
         }
         deployInfo.setChildModules(moduleNames.toString());
-        int i=deployInfoDao.updateDeployInfo(deployInfo);
-        if(i<1){
+        int i = deployInfoDao.updateDeployInfo(deployInfo);
+        if (i < 1) {
             log.info("{}计算覆盖率具体步骤...获取ChildModules失败uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
             return;
         }
@@ -627,19 +614,20 @@ public class CodeCovServiceImpl implements CodeCovService {
             throw new RuntimeException(e.getMessage());
         }
     }
-    private void mergeExec(List<String> ExecFiles,String NewFileName){
-        ExecFileLoader execFileLoader=new ExecFileLoader();
-        try{
-            for(String ExecFile:ExecFiles){
+
+    private void mergeExec(List<String> ExecFiles, String NewFileName) {
+        ExecFileLoader execFileLoader = new ExecFileLoader();
+        try {
+            for (String ExecFile : ExecFiles) {
                 execFileLoader.load(new File(ExecFile));
             }
-        }catch (Exception e){
-            log.error("ExecFiles 合并失败 errorMessege is {}",e.fillInStackTrace());
+        } catch (Exception e) {
+            log.error("ExecFiles 合并失败 errorMessege is {}", e.fillInStackTrace());
         }
-        try{
-        execFileLoader.save(new File(NewFileName),false);}
-        catch (Exception e){
-            log.error("ExecFiles 保存失败 errorMessege is {}",e.fillInStackTrace());
+        try {
+            execFileLoader.save(new File(NewFileName), false);
+        } catch (Exception e) {
+            log.error("ExecFiles 保存失败 errorMessege is {}", e.fillInStackTrace());
         }
     }
 }
