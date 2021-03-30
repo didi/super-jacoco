@@ -42,6 +42,18 @@
         asc
         limit #{num}
     </select>
+    <select id="queryCoverByEnvType" resultType="com.xiaoju.basetech.entity.CoverageReportEntity">
+        SELECT * from diff_coverage_report
+        `now_version`=#{branch}
+        AND `env_type`= #{envType}
+        AND `git_url`= #{gitUrl}
+        AND `from`= 2
+        AND `request_status`&gt;0
+        AND `request_status`&lt;=200
+        ORDER BY `update_time`
+        desc
+        limit 1
+    </select>
 
     <insert id="insertCoverageReportById" parameterType="com.xiaoju.basetech.entity.CoverageReportEntity">
         INSERT INTO diff_coverage_report(

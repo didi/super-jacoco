@@ -56,7 +56,7 @@ public interface CodeCovService {
      * @param coverageReport
      */
     void calculateEnvCov(CoverageReportEntity coverageReport);
-
+    void pullAndMergeExecFile(CoverageReportEntity coverageReport);
     /**
      * 手动获取手工测试覆盖率
      *

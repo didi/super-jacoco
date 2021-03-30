@@ -8,9 +8,9 @@ package com.xiaoju.basetech.util;
  */
 public class Constants {
 
-    public static final String CODE_ROOT = System.getProperty("user.home")+"/app/super_jacoco/clonecode/";
-    public static final String LOG_PATH = System.getProperty("user.home")+"/report/logs/";
-    public static final String REPORT_PATH = System.getProperty("user.home")+"/report/";
+    public static final String CODE_ROOT = System.getProperty("user.home") + "/app/super_jacoco/clonecode/";
+    public static final String LOG_PATH = System.getProperty("user.home") + "/report/logs/";
+    public static final String REPORT_PATH = System.getProperty("user.home") + "/report/";
     public static final String NO_DIFFCODE_REPORT = LocalIpUtils.getTomcatBaseUrl() + "nodiffcode.html";
     public static final String JACOCO_RESOURE_PATH = "/app/diff_code_coverage/resource/jacoco-resources";
 
@@ -59,8 +59,13 @@ public class Constants {
         REMOVE_FILE_FAIL(211, "删除源文件失败"),
 
         ENVREPORT_FAIL(212, "统计功能测试增量覆盖率失败"),
-        WAITING_PULL_EXEC(12,"等待统计功能测试增量覆盖率中");
+        WAITING_PULL_EXEC(12, "等待统计功能测试增量覆盖率中"),
 
+        PULL_EXEC_SUCCESS(13,"拉取exec文件成功"),
+        PULL_EXEC_FAILED(213,"拉取exec文件失败"),
+
+        MERGE_EXEC_SUCCESS(14, "mergeExec文件成功"),
+        MERGE_EXEC_FAILED(214, "mergeExec文件失败");
 
 
         private int value;
@@ -123,7 +128,8 @@ public class Constants {
 
     public enum CoverageFrom {
         UNIT(1, "单元测试"),
-        ENV(2, "环境部署");
+        ENV(2, "环境部署"),
+        ENV_CLUSTER(3, "环境集群");
         private int value;
         private String desc;
 

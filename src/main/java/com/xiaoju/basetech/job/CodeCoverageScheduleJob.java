@@ -89,6 +89,7 @@ public class CodeCoverageScheduleJob {
     }
 
     /**
+     * 单机环境覆盖率统计
      * 每五分钟从项目机器上拉取exec执行文件，计算环境的增量方法覆盖率
      */
     @Scheduled(fixedDelay = 300_000L, initialDelay = 300_000L)
@@ -130,5 +131,26 @@ public class CodeCoverageScheduleJob {
             }
         });
     }
+    /**
+     * 集群环境覆盖率统计
+     * 每五分钟从项目机器上拉取exec执行文件，计算环境的增量方法覆盖率
+     */
+    @Scheduled(fixedDelay = 300_000L, initialDelay = 300_000L)
+    public void calculateEnvClusterCov() {
+        List<CoverageReportEntity> resList = coverageReportDao.queryCoverByStatus(Constants.JobStatus.SUCCESS.val(),
+                Constants.CoverageFrom.ENV_CLUSTER.val(), 10);
+        log.info("查询需要拉取exec文件的数据{}条", resList.size());
+        resList.forEach(o -> {
+            try {
+                if(!new File(o.getNowLocalPath()).exists()){
+                    log.info("任务不在该机器执行，uuid={}", o.getUuid());
+                    return;
+                }
+                codeCovService.calculateEnvCov(o);
 
+            } catch (Exception e) {
+                log.error("uuid={}拉取exec文件异常", o.getUuid(), e);
+            }
+        });
+    }
 }

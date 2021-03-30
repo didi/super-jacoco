@@ -53,6 +53,11 @@ public class CodeCovController {
     @RequestMapping(value = "/triggerEnvCov", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
     public HttpResult<Boolean> triggerEnvCov(@RequestBody @Validated EnvCoverRequest envCoverRequest) {
+        if(envCoverRequest.getDeployType() ==1){
+            if(envCoverRequest.getEnvType().isEmpty()){
+                return HttpResult.build(-1,"集群收集，envType不可为空。");
+            }
+        }
         codeCovService.triggerEnvCov(envCoverRequest);
         return HttpResult.success();
 

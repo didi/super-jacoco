@@ -10,6 +10,7 @@ import com.xiaoju.basetech.util.*;
 import jodd.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
+import org.jacoco.core.tools.ExecDumpClient;
 import org.jacoco.core.tools.ExecFileLoader;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -275,6 +276,7 @@ public class CodeCovServiceImpl implements CodeCovService {
 
     @Override
     public void triggerEnvCov(EnvCoverRequest envCoverRequest) {
+
         try {
             CoverageReportEntity coverageReport = new CoverageReportEntity();
             coverageReport.setFrom(Constants.CoverageFrom.ENV.val());
@@ -283,6 +285,10 @@ public class CodeCovServiceImpl implements CodeCovService {
             coverageReport.setGitUrl(envCoverRequest.getGitUrl());
             coverageReport.setNowVersion(envCoverRequest.getNowVersion());
             coverageReport.setType(envCoverRequest.getType());
+            if (envCoverRequest.getDeployType() == 1) {
+                coverageReport.setFrom(CoverageFrom.ENV_CLUSTER.val());
+            }
+            coverageReport.setEnvType(envCoverRequest.getEnvType());
 
             if (!StringUtils.isEmpty(envCoverRequest.getBaseVersion())) {
                 coverageReport.setBaseVersion(envCoverRequest.getBaseVersion());
@@ -299,10 +305,24 @@ public class CodeCovServiceImpl implements CodeCovService {
                 coverageReportDao.insertCoverageReportById(coverageReport);
                 return;
             }
+            String masterUuid = "";
+            //是否为集群部署
+            if (envCoverRequest.getDeployType() == 1) {
+                masterUuid = getTheMaster(envCoverRequest);
+                //判断是否为第一个部署任务
+                if (!envCoverRequest.getUuid().equals(masterUuid)) {
+                    //coverageReport.setRequestStatus(Constants.JobStatus.SLAVE.val());
+                    //coverageReportDao.insertCoverageReportById(coverageReport);
+                    deployInfoDao.insertDeployId(envCoverRequest.getUuid(), envCoverRequest.getAddress(), envCoverRequest.getPort(), masterUuid);
+                    return;
+                }
+
+            }
+
 
             coverageReport.setRequestStatus(Constants.JobStatus.WAITING.val());
             coverageReportDao.insertCoverageReportById(coverageReport);
-            deployInfoDao.insertDeployId(envCoverRequest.getUuid(), envCoverRequest.getAddress(), envCoverRequest.getPort());
+            deployInfoDao.insertDeployId(envCoverRequest.getUuid(), envCoverRequest.getAddress(), envCoverRequest.getPort(), masterUuid);
             new Thread(() -> {
                 cloneAndCompileCode(coverageReport);
                 if (coverageReport.getRequestStatus() != Constants.JobStatus.COMPILE_DONE.val()) {
@@ -318,6 +338,7 @@ public class CodeCovServiceImpl implements CodeCovService {
                 }
                 calculateEnvCov(coverageReport);
             }).start();
+
         } catch (Exception e) {
             throw new ResponseException(e.getMessage());
         }
@@ -341,11 +362,17 @@ public class CodeCovServiceImpl implements CodeCovService {
         }
 
         try {
-            int exitCode = CmdExecutor.executeCmd(new String[]{"cd " + coverageReport.getNowLocalPath() + "&&java -jar " +
-                    JACOCO_PATH + " dump --address " + deployInfoEntity.getAddress() + " --port " +
-                    deployInfoEntity.getPort() + " --destfile ./jacoco.exec"}, CMD_TIMEOUT);
+            int exitCode = 1;
+            if (coverageReport.getFrom() == 3) {
+                pullAndMergeExecFile(coverageReport);
 
-            if (exitCode == 0) {
+            } else {
+                exitCode = CmdExecutor.executeCmd(new String[]{"cd " + coverageReport.getNowLocalPath() + "&&java -jar " +
+                        JACOCO_PATH + " dump --address " + deployInfoEntity.getAddress() + " --port " +
+                        deployInfoEntity.getPort() + " --destfile ./jacoco.exec"}, CMD_TIMEOUT);
+            }
+
+            if (coverageReport.getRequestStatus()==JobStatus.PULL_EXEC_SUCCESS.val()|| exitCode == 0) {
                 CmdExecutor.executeCmd(new String[]{"rm -rf " + REPORT_PATH + coverageReport.getUuid()}, CMD_TIMEOUT);
                 String[] moduleList = deployInfoEntity.getChildModules().split(",");
                 StringBuilder builder = new StringBuilder("java -jar " + JACOCO_PATH + " report " + deployInfoEntity.getCodePath() + "/jacoco.exec ");
@@ -458,6 +485,37 @@ public class CodeCovServiceImpl implements CodeCovService {
         } finally {
             coverageReportDao.updateCoverageReportByReport(coverageReport);
         }
+    }
+
+    @Override
+    public void pullAndMergeExecFile(CoverageReportEntity coverageReport) {
+
+        List<DeployInfoEntity> deployInfoEntities = deployInfoDao.queryDeployIdByMaster(coverageReport.getUuid());
+        ExecDumpClient execDumpClient = new ExecDumpClient();
+        execDumpClient.setRetryCount(10);
+        List<String> execFiles = new ArrayList<>();
+        execFiles.add(coverageReport.getNowLocalPath() + "/jacoco.exec");
+        List<Boolean> records = new ArrayList<>();
+        deployInfoEntities.forEach(deployInfoEntity -> {
+            try {
+                ExecFileLoader execFileLoader = execDumpClient.dump(deployInfoEntity.getAddress(), deployInfoEntity.getPort());
+                execFileLoader.save(new File(coverageReport.getNowLocalPath() + "/" + deployInfoEntity.getUuid() + ".exec"), false);
+                execFiles.add(coverageReport.getNowLocalPath() + "/" + deployInfoEntity.getUuid() + ".exec");
+                records.add(true);
+            } catch (IOException e) {
+                records.add(false);
+                log.error("拉取exec文件失败，uuid is {},errorTrace is {}", deployInfoEntity.getUuid(), e.fillInStackTrace());
+            }
+        });
+        if (!records.contains(true)) {
+            //全部拉取失败
+            coverageReport.setErrMsg("获取jacoco.exec 文件失败");
+            coverageReport.setRequestStatus(JobStatus.PULL_EXEC_FAILED.val());
+            coverageReportDao.updateCoverageReportByReport(coverageReport);
+        }
+        //合并
+        mergeExec(execFiles, coverageReport.getNowLocalPath() + "/jacoco.exec", coverageReport);
+
     }
 
     @Override
@@ -615,19 +673,30 @@ public class CodeCovServiceImpl implements CodeCovService {
         }
     }
 
-    private void mergeExec(List<String> ExecFiles, String NewFileName) {
+    private String getTheMaster(EnvCoverRequest envCoverRequest) {
+        CoverageReportEntity coverageReportEntity = coverageReportDao.queryCoverByEnvType(envCoverRequest.getGitUrl(), envCoverRequest.getNowVersion(), envCoverRequest.getEnvType());
+        if (coverageReportEntity.getUuid().isEmpty()) {
+            return envCoverRequest.getUuid();
+        }
+        return coverageReportEntity.getUuid();
+    }
+
+    private void mergeExec(List<String> ExecFiles, String NewFileName, CoverageReportEntity coverageReport) {
         ExecFileLoader execFileLoader = new ExecFileLoader();
         try {
             for (String ExecFile : ExecFiles) {
                 execFileLoader.load(new File(ExecFile));
             }
-        } catch (Exception e) {
-            log.error("ExecFiles 合并失败 errorMessege is {}", e.fillInStackTrace());
-        }
-        try {
             execFileLoader.save(new File(NewFileName), false);
+            coverageReport.setErrMsg("合并jacoco.exec 成功");
+            coverageReport.setRequestStatus(Constants.JobStatus.MERGE_EXEC_SUCCESS.val());
         } catch (Exception e) {
-            log.error("ExecFiles 保存失败 errorMessege is {}", e.fillInStackTrace());
+            coverageReport.setErrMsg("合并jacoco.exec 失败");
+            coverageReport.setRequestStatus(Constants.JobStatus.MERGE_EXEC_FAILED.val());
+            log.error("ExecFiles 合并失败 errorMessege is {}", e.fillInStackTrace());
+            return;
+        } finally {
+            coverageReportDao.updateCoverageReportByReport(coverageReport);
         }
     }
 }

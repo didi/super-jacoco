@@ -3,6 +3,8 @@ package com.xiaoju.basetech.dao;
 import com.xiaoju.basetech.entity.DeployInfoEntity;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 public interface DeployInfoDao {
 
     /**
@@ -12,7 +14,7 @@ public interface DeployInfoDao {
      * @param port
      * @return
      */
-    int insertDeployId(@Param("uuid") String uuid, @Param("address") String address, @Param("port") int port);
+    int insertDeployId(@Param("uuid") String uuid, @Param("address") String address, @Param("port") int port,@Param("masterUuid")String masterUuid);
 
     /**
      * 只是环境用
@@ -20,7 +22,7 @@ public interface DeployInfoDao {
      * @return
      */
     DeployInfoEntity queryDeployId(@Param("uuid") String uuid);
-
+    List<DeployInfoEntity> queryDeployIdByMaster(@Param("masterUuid") String masterUuid);
     /**
      *
      * @param deployInfoEntity

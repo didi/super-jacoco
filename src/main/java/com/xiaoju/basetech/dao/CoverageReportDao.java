@@ -2,6 +2,7 @@ package com.xiaoju.basetech.dao;
 
 import com.xiaoju.basetech.entity.CoverageReportEntity;
 import com.xiaoju.basetech.entity.DeployInfoEntity;
+import com.xiaoju.basetech.entity.EnvCoverRequest;
 import org.apache.ibatis.annotations.Param;
 
 import javax.validation.constraints.NotNull;
@@ -50,4 +51,6 @@ public interface CoverageReportDao {
      * @return int
      */
     int casUpdateStatusById(Integer id, Integer requestStatus, Integer expectedStatus);
+
+    CoverageReportEntity queryCoverByEnvType(@Param("gitUrl") String gitUrl, @Param("branch") String branch, @Param("envType") String envType);
 }

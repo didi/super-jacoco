@@ -13,16 +13,22 @@
         SELECT * FROM diff_deploy_info
         WHERE `job_record_uuid`=#{uuid}
     </select>
+    <select id="queryDeployIdByMaster" resultType="com.xiaoju.basetech.entity.DeployInfoEntity">
+        SELECT * FROM diff_deploy_info
+        WHERE `master_uuid`=#{masterUuid}
+    </select>
 
     <insert id="insertDeployId">
         INSERT INTO diff_deploy_info(
         `job_record_uuid`,
         `address`,
-        `port`
+        `port`,
+        `master_uuid`
         )VALUES (
         #{uuid},
         #{address},
-        #{port}
+        #{port},
+        #{masterUuid}
         )
     </insert>
     <update id="updateDeployInfo" parameterType="com.xiaoju.basetech.entity.DeployInfoEntity">
