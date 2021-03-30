@@ -2,12 +2,14 @@ package com.xiaoju.basetech.service.impl;
 
 
 import com.google.common.base.Preconditions;
+import com.sun.jna.platform.win32.OaIdl;
 import com.xiaoju.basetech.dao.CoverageReportDao;
 import com.xiaoju.basetech.dao.DeployInfoDao;
 import com.xiaoju.basetech.entity.*;
 import com.xiaoju.basetech.service.CodeCovService;
 import com.xiaoju.basetech.util.*;
 import jodd.io.FileUtil;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.jacoco.core.tools.ExecDumpClient;
@@ -285,11 +287,11 @@ public class CodeCovServiceImpl implements CodeCovService {
             coverageReport.setGitUrl(envCoverRequest.getGitUrl());
             coverageReport.setNowVersion(envCoverRequest.getNowVersion());
             coverageReport.setType(envCoverRequest.getType());
+            //判断是否为集群部署
             if (envCoverRequest.getDeployType() == 1) {
                 coverageReport.setFrom(CoverageFrom.ENV_CLUSTER.val());
+                coverageReport.setEnvType(envCoverRequest.getEnvType());
             }
-            coverageReport.setEnvType(envCoverRequest.getEnvType());
-
             if (!StringUtils.isEmpty(envCoverRequest.getBaseVersion())) {
                 coverageReport.setBaseVersion(envCoverRequest.getBaseVersion());
             }
@@ -311,15 +313,12 @@ public class CodeCovServiceImpl implements CodeCovService {
                 masterUuid = getTheMaster(envCoverRequest);
                 //判断是否为第一个部署任务
                 if (!envCoverRequest.getUuid().equals(masterUuid)) {
-                    //coverageReport.setRequestStatus(Constants.JobStatus.SLAVE.val());
-                    //coverageReportDao.insertCoverageReportById(coverageReport);
+                    //如果不是第一个部署任务，只写入deployInfo表
                     deployInfoDao.insertDeployId(envCoverRequest.getUuid(), envCoverRequest.getAddress(), envCoverRequest.getPort(), masterUuid);
                     return;
                 }
 
             }
-
-
             coverageReport.setRequestStatus(Constants.JobStatus.WAITING.val());
             coverageReportDao.insertCoverageReportById(coverageReport);
             deployInfoDao.insertDeployId(envCoverRequest.getUuid(), envCoverRequest.getAddress(), envCoverRequest.getPort(), masterUuid);
@@ -365,14 +364,13 @@ public class CodeCovServiceImpl implements CodeCovService {
             int exitCode = 1;
             if (coverageReport.getFrom() == 3) {
                 pullAndMergeExecFile(coverageReport);
-
             } else {
                 exitCode = CmdExecutor.executeCmd(new String[]{"cd " + coverageReport.getNowLocalPath() + "&&java -jar " +
                         JACOCO_PATH + " dump --address " + deployInfoEntity.getAddress() + " --port " +
                         deployInfoEntity.getPort() + " --destfile ./jacoco.exec"}, CMD_TIMEOUT);
             }
 
-            if (coverageReport.getRequestStatus()==JobStatus.PULL_EXEC_SUCCESS.val()|| exitCode == 0) {
+            if (coverageReport.getRequestStatus() == JobStatus.MERGE_EXEC_SUCCESS.val() || exitCode == 0) {
                 CmdExecutor.executeCmd(new String[]{"rm -rf " + REPORT_PATH + coverageReport.getUuid()}, CMD_TIMEOUT);
                 String[] moduleList = deployInfoEntity.getChildModules().split(",");
                 StringBuilder builder = new StringBuilder("java -jar " + JACOCO_PATH + " report " + deployInfoEntity.getCodePath() + "/jacoco.exec ");
@@ -487,6 +485,7 @@ public class CodeCovServiceImpl implements CodeCovService {
         }
     }
 
+
     @Override
     public void pullAndMergeExecFile(CoverageReportEntity coverageReport) {
 
@@ -494,6 +493,19 @@ public class CodeCovServiceImpl implements CodeCovService {
         ExecDumpClient execDumpClient = new ExecDumpClient();
         execDumpClient.setRetryCount(10);
         List<String> execFiles = new ArrayList<>();
+        File f = new File(coverageReport.getNowLocalPath() + "/jacoco.exec");
+        try {
+            if (!new File(coverageReport.getNowLocalPath() + "/jacoco.exec").exists()) {
+                f.createNewFile();
+            }
+        } catch (IOException e) {
+            log.error("创建jacoco.exec 文件失败；uuid is{}", coverageReport.getUuid());
+            coverageReport.setErrMsg("获取jacoco.exec 文件失败");
+            coverageReport.setRequestStatus(JobStatus.PULL_EXEC_FAILED.val());
+            coverageReportDao.updateCoverageReportByReport(coverageReport);
+            return;
+           // throw new IOException(e.getMessage());
+        }
         execFiles.add(coverageReport.getNowLocalPath() + "/jacoco.exec");
         List<Boolean> records = new ArrayList<>();
         deployInfoEntities.forEach(deployInfoEntity -> {
