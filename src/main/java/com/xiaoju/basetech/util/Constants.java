@@ -12,7 +12,7 @@ public class Constants {
     public static final String LOG_PATH = System.getProperty("user.home")+"/report/logs/";
     public static final String REPORT_PATH = System.getProperty("user.home")+"/report/";
     public static final String NO_DIFFCODE_REPORT = LocalIpUtils.getTomcatBaseUrl() + "nodiffcode.html";
-    public static final String JACOCO_RESOURE_PATH = "/app/diff_code_coverage/resource/jacoco-resources";
+    public static final String JACOCO_RESOURE_PATH =System.getProperty("user.home")+ "/resource/jacoco-resources";
 
     public enum JobStatus {
 
