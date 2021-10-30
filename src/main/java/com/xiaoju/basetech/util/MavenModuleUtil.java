@@ -247,7 +247,7 @@ public class MavenModuleUtil {
             String modules;
             if (moduleM.find()) {
                 modules = moduleM.group();
-                modules = modules.replaceAll("<!--<module>.*?</module>-->", ",");
+                modules = modules.replaceAll("<!--.*?<module>.*?</module>.*?-->", ",");
                 modules = modules.replaceAll("</?modules?>", ",");
                 String[] module = modules.split(",");
                 for (String m : module) {
