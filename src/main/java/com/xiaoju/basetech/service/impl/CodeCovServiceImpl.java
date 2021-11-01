@@ -7,6 +7,7 @@ import com.xiaoju.basetech.dao.DeployInfoDao;
 import com.xiaoju.basetech.entity.*;
 import com.xiaoju.basetech.service.CodeCovService;
 import com.xiaoju.basetech.util.*;
+import java.util.Arrays;
 import jodd.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
@@ -315,6 +316,30 @@ public class CodeCovServiceImpl implements CodeCovService {
                         log.info("{}计算覆盖率具体步骤...计算增量代码失败，uuid={}", Thread.currentThread().getName(), coverageReport.getUuid());
                         return;
                     }
+                }else {
+                    // 将配置的 subModule 和 excludeModule进行处理
+                    DeployInfoEntity deployInfo = new DeployInfoEntity();
+                    deployInfo.setUuid(coverageReport.getUuid());
+                    deployInfo.setCodePath(coverageReport.getNowLocalPath());
+                    if (StringUtils.isEmpty(envCoverRequest.getSubModule())){
+                        String pomPath = deployInfo.getCodePath() + "/pom.xml";
+                        ArrayList<String> moduleList = MavenModuleUtil.getValidModules(pomPath);
+                        // 将需要排除的模块进行处理
+                        if (!StringUtils.isEmpty(envCoverRequest.getExcludeModule())){
+                            String[] excludeModules = envCoverRequest.getExcludeModule().split(",");
+                            // 删除掉需要排除的模块
+                            moduleList.removeAll(Arrays.asList(excludeModules));
+                        }
+                        StringBuilder moduleNames = new StringBuilder("");
+                        for (String module : moduleList) {
+                            moduleNames.append(module + ",");
+                        }
+                        deployInfo.setChildModules(moduleNames.toString());
+                    }else {
+                        // 只处理指定的模块
+                        deployInfo.setChildModules(envCoverRequest.getSubModule());
+                    }
+                    deployInfoDao.updateDeployInfo(deployInfo);
                 }
                 calculateEnvCov(coverageReport);
             }).start();
@@ -347,10 +372,13 @@ public class CodeCovServiceImpl implements CodeCovService {
 
             if (exitCode == 0) {
                 CmdExecutor.executeCmd(new String[]{"rm -rf " + REPORT_PATH + coverageReport.getUuid()}, CMD_TIMEOUT);
-                String[] moduleList = deployInfoEntity.getChildModules().split(",");
+                String[] moduleList = {};
+                if (!StringUtils.isEmpty(deployInfoEntity.getChildModules())){
+                    moduleList = deployInfoEntity.getChildModules().split(",");
+                }
                 StringBuilder builder = new StringBuilder("java -jar " + JACOCO_PATH + " report " + deployInfoEntity.getCodePath() + "/jacoco.exec ");
                 // 单模块的时候没有moduleList
-                if (moduleList.length == 0) {
+                if (moduleList == null || moduleList.length == 0) {
                     builder.append("--sourcefiles ./src/main/java/ ");
                     builder.append("--classfiles ./target/classes/com/ ");
                 } else {

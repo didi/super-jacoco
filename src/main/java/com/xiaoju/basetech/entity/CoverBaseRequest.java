@@ -36,6 +36,12 @@ public class CoverBaseRequest {
     private String subModule;
 
     /**
+     * 同一个git仓库可能存在多个模块，excludeModule为相对路径，当工程模块中不需要统计此模块时进行配置
+     * 例如: assembly
+     */
+    private String excludeModule;
+
+    /**
      * 1、全量；2、增量
      */
     @NotNull(message = "type不能为空")
