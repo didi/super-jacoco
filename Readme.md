@@ -7,6 +7,9 @@
 + 高可用：分布式架构，任务机可无限扩展，避免任务机down机或者任务过多时出现性能瓶颈；
 + 可视化：提供html格式的覆盖率报告，可读性高。
 
+### 实战教程
+* [基于Super-Jacoco的精准测试实践之路](https://mp.weixin.qq.com/s/vBWKPhAWW4mTQ_IMnw-gFw)
+
 ### 使用方法
 #### 1、数据库安装和初始化
 	安装mysql数据库，创建数据库后执行sql/db.sql文件中的建表SQL
