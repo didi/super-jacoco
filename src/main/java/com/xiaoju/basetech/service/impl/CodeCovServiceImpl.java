@@ -254,7 +254,7 @@ public class CodeCovServiceImpl implements CodeCovService {
         }
         DeployInfoEntity deployInfo = new DeployInfoEntity();
         deployInfo.setUuid(coverageReport.getUuid());
-        deployInfo.setCodePath(coverageReport.getNowLocalPath());
+        deployInfo.setCodePath(coverageReport.getNowLocalCodePath());
         String pomPath = deployInfo.getCodePath() + "/pom.xml";
         ArrayList<String> moduleList = MavenModuleUtil.getValidModules(pomPath);
         StringBuilder moduleNames = new StringBuilder("");
@@ -341,7 +341,7 @@ public class CodeCovServiceImpl implements CodeCovService {
         }
 
         try {
-            int exitCode = CmdExecutor.executeCmd(new String[]{"cd " + coverageReport.getNowLocalPath() + "&&java -jar " +
+            int exitCode = CmdExecutor.executeCmd(new String[]{"cd " + coverageReport.getNowLocalCodePath() + "&&java -jar " +
                     JACOCO_PATH + " dump --address " + deployInfoEntity.getAddress() + " --port " +
                     deployInfoEntity.getPort() + " --destfile ./jacoco.exec"}, CMD_TIMEOUT);
 

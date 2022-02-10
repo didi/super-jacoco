@@ -38,5 +38,7 @@ public class CoverageReportEntity {
     private String reportFile;
     private Integer from;
     private String logFile = "";
+    private String nowLocalCodePath = "";
+    private String baseLocalCodePath = "";
     
 }

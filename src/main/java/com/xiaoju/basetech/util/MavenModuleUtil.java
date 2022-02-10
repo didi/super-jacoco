@@ -27,21 +27,21 @@ public class MavenModuleUtil {
 
     public void addMavenModule(CoverageReportEntity coverageReport) {
         try {
-            String pomPath = coverageReport.getNowLocalPath() + "/pom.xml";
+            String pomPath = coverageReport.getNowLocalCodePath() + "/pom.xml";
             File pomFile = new File(pomPath);
             if (!pomFile.exists()) {
                 coverageReport.setRequestStatus(Constants.JobStatus.FAILADDMODULE.val());
                 return;
             }
             // 添加lombok配置
-            File lombokConfig = new File(coverageReport.getNowLocalPath() + "/lombok.config");
+            File lombokConfig = new File(coverageReport.getNowLocalCodePath() + "/lombok.config");
             FileWriter lombokWriter = new FileWriter(lombokConfig);
             lombokWriter.write("lombok.addLombokGeneratedAnnotation = true");
             lombokWriter.flush();
             lombokWriter.close();
             ArrayList<String> list = getChildPomsPath(pomPath);
             if (list.size() <= 1) {
-                coverageReport.setReportFile(coverageReport.getNowLocalPath() + "/target/site/jacoco/index.html");
+                coverageReport.setReportFile(coverageReport.getNowLocalCodePath() + "/target/site/jacoco/index.html");
                 coverageReport.setRequestStatus(Constants.JobStatus.ADDMODULE_DONE.val());
                 return;
             }
@@ -50,7 +50,7 @@ public class MavenModuleUtil {
             String str = dependencyStr(pomPath, moduleInfo, denpBuilder).toString();
             if (StringUtils.isEmpty(str)) {
                 coverageReport.setRequestStatus(Constants.JobStatus.ADDMODULE_DONE.val());
-                coverageReport.setReportFile(coverageReport.getNowLocalPath() + "/target/site/jacoco/index.html");
+                coverageReport.setReportFile(coverageReport.getNowLocalCodePath() + "/target/site/jacoco/index.html");
                 return;
             }
             //在父pom中写入jacocomodule
@@ -102,17 +102,17 @@ public class MavenModuleUtil {
                     "        </plugins>\n" +
                     "    </build>\n" +
                     "</project>");
-            File coverageModule = new File(coverageReport.getNowLocalPath() + "/jacocomodule");
+            File coverageModule = new File(coverageReport.getNowLocalCodePath() + "/jacocomodule");
             if (!coverageModule.exists()) {
                 coverageModule.mkdir();
-                File coveragePomFile = new File(coverageReport.getNowLocalPath() + "/jacocomodule/pom.xml");
+                File coveragePomFile = new File(coverageReport.getNowLocalCodePath() + "/jacocomodule/pom.xml");
                 if (!coveragePomFile.exists()) {
                     coveragePomFile.createNewFile();
                     FileWriter cwriter = new FileWriter(coveragePomFile);
                     cwriter.write(builder.toString());
                     cwriter.flush();
                     cwriter.close();
-                    coverageReport.setReportFile(coverageReport.getNowLocalPath() + "/jacocomodule/target/site/jacoco-aggregate/index.html");
+                    coverageReport.setReportFile(coverageReport.getNowLocalCodePath() + "/jacocomodule/target/site/jacoco-aggregate/index.html");
                     coverageReport.setRequestStatus(Constants.JobStatus.ADDMODULE_DONE.val());
                     return;
                 }

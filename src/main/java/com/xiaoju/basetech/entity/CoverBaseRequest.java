@@ -36,6 +36,11 @@ public class CoverBaseRequest {
     private String subModule;
 
     /**
+     * codePath为相对目录，表示从代码库根目录到pom.xml的相对路径，如果为空，则代表pom.xml在根目录下
+     */
+    private String codePath;
+
+    /**
      * 1、全量；2、增量
      */
     @NotNull(message = "type不能为空")
