@@ -34,5 +34,6 @@ CREATE TABLE `diff_deploy_info` (
   KEY `id` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COMMENT='服务部署地址';
 
+ALTER TABLE `diff_coverage_report`  ADD COLUMN  `code_path` varchar(500) NOT NULL DEFAULT '';
 
 

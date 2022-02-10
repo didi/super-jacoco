@@ -24,7 +24,7 @@ public class UnitTester {
 
     public void executeUnitTest(CoverageReportEntity coverageReport) {
         long startTime = System.currentTimeMillis();
-        String unittestCmd = "cd " + coverageReport.getNowLocalPath() + "&&mvn clean";
+        String unittestCmd = "cd " + coverageReport.getNowLocalCodePath() + "&&mvn clean";
         if (coverageReport.getEnvType() != null && !coverageReport.getEnvType().equals("")) {
             unittestCmd = unittestCmd + " -P=" + coverageReport.getEnvType();
         }

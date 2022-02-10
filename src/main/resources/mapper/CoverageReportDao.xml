@@ -21,7 +21,7 @@
         <result column="update_time" property="updateTime"/>
         <result column="from" property="from"/>
         <result column="log_file" property="logFile"/>
-
+        <result column="code_path" property="codePath"/>
     </resultMap>
 
     <select id="queryCoverageReportByUuid" parameterType="java.lang.String" resultMap="coverageReportEntity">
@@ -55,6 +55,7 @@
         `now_version`,
         `now_local_path` ,
         `base_local_path`,
+        `code_path`,
         `from`
         )VALUES (
         #{coverageReportEntity.uuid},
@@ -67,6 +68,7 @@
         #{coverageReportEntity.nowVersion},
         #{coverageReportEntity.nowLocalPath},
         #{coverageReportEntity.baseLocalPath},
+        #{coverageReportEntity.codePath},
         #{coverageReportEntity.from}
         )
     </insert>

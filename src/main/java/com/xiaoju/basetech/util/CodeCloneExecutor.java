@@ -5,11 +5,12 @@ import jodd.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import tk.mybatis.mapper.util.StringUtil;
 
 import java.io.File;
 
 import static com.xiaoju.basetech.util.Constants.CODE_ROOT;
-
+import org.springframework.util.StringUtils;
 
 /**
  * @description:
@@ -36,8 +37,13 @@ public class CodeCloneExecutor {
         coverageReport.setLogFile(logFile);
         try {
             String uuid = coverageReport.getUuid();
-            String nowLocalPath = CODE_ROOT + uuid + "/" + coverageReport.getNowVersion().replace("/", "_");
+            String nowLocalPath = CODE_ROOT + uuid + "/" +
+                    coverageReport.getNowVersion().replace("/", "_");
             coverageReport.setNowLocalPath(nowLocalPath);
+            String codePath=coverageReport.getCodePath();
+            coverageReport.setNowLocalCodePath( (StringUtils.isEmpty(coverageReport.getEnvType())
+                    ? nowLocalPath:nowLocalPath+"/"+codePath)  );
+              // suppose pom.xml is not in project root path
             if (new File(CODE_ROOT + uuid + "/").exists()) {
                 FileUtil.cleanDir(CODE_ROOT + uuid + "/");
             }

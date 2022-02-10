@@ -19,7 +19,7 @@ public class CodeCompilerExecutor {
 
     public void compileCode(CoverageReportEntity coverageReport) {
         String logFile = coverageReport.getLogFile().replace(LocalIpUtils.getTomcatBaseUrl()+"logs/", LOG_PATH);
-        String[] compileCmd = new String[]{"cd " + coverageReport.getNowLocalPath() + "&&mvn clean compile " +
+        String[] compileCmd = new String[]{"cd " + coverageReport.getNowLocalCodePath() + "&&mvn clean compile " +
                 (StringUtils.isEmpty(coverageReport.getEnvType()) ? "" : "-P=" + coverageReport.getEnvType()) + ">>" + logFile};
         try {
             int exitCode = CmdExecutor.executeCmd(compileCmd, 600000L);
