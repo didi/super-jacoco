@@ -20,12 +20,16 @@ public class CmdExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(CmdExecutor.class);
 
     private static AtomicInteger counter = new AtomicInteger(0);
+    private static String osName=System.getProperty("os.name").toLowerCase();
 
     private static int maxThread = 64;
 
     private static ThreadPoolExecutor executor = new ThreadPoolExecutor(20, maxThread, 5 * 60, TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(1), r -> new Thread(r, "CmdThread-" + counter.getAndIncrement()));
 
+    private static boolean isWindows(){
+        return  osName.contains("windows")? true:false;
+    }
     public static int executeCmd(String[] commands, Long timeout) throws Exception {
         StringBuffer ret = new StringBuffer();
         if (commands == null || commands.length == 0) {
@@ -46,7 +50,8 @@ public class CmdExecutor {
             }
 
             LOG.info("executeCmd : bash -c " + e.toString());
-            ProcessBuilder var12 = new ProcessBuilder(new String[]{"bash", "-c", e.toString()});
+            String []cmd=isWindows()? new String[]{"cmd", "/c", e.toString()} : new String[]{"bash", "-c", e.toString()};
+            ProcessBuilder var12 = new ProcessBuilder(cmd);
             var12.redirectErrorStream(true);
             process = var12.start();
             CmdExecutor.ReadLine readLine = new CmdExecutor.ReadLine(process.getInputStream(), ret, true);
