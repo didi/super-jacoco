@@ -567,7 +567,7 @@ public class CodeCovServiceImpl implements CodeCovService {
                     buildertmp.append(" --sourcefiles ./" + subModule + "/src/main/java/");
                     buildertmp.append(" --classfiles ./" + subModule + "/target/classes/com/");
                     if (!StringUtils.isEmpty(diffFiles)) {
-                        builder.append("--diffFile " + diffFiles);
+                        buildertmp.append("--diffFile " + diffFiles);
                     }
                     buildertmp.append(" --html jacocoreport/" + subModule + " --encoding utf-8 --name " + reportName);
                     littleExitCode += CmdExecutor.executeCmd(new String[]{"cd " + localHostRequestParam.getNowPath() + "&&" + buildertmp.toString()}, CMD_TIMEOUT);
