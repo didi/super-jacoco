@@ -45,8 +45,21 @@ public class CmdExecutor {
                 LOG.warn("CmdThreadPoolBusy");
             }
 
-            LOG.info("executeCmd : bash -c " + e.toString());
-            ProcessBuilder var12 = new ProcessBuilder(new String[]{"bash", "-c", e.toString()});
+            String command = e.toString();
+            ProcessBuilder var12;
+            if (OSUtils.isWindows()){
+                String diskPath = System.getProperty("user.home").substring(0,1);
+                command = command.replace("&&","&");
+                command = diskPath +":&"+command;
+                var12 = new ProcessBuilder(new String[]{"cmd", "/c", command});
+                command = " cmd  /c "+ command;
+            }else {
+                var12 = new ProcessBuilder(new String[]{"bash", "-c", command});
+                command = " bash -c "+ command;
+            }
+            LOG.info("executeCmd :  " + command);
+
+
             var12.redirectErrorStream(true);
             process = var12.start();
             CmdExecutor.ReadLine readLine = new CmdExecutor.ReadLine(process.getInputStream(), ret, true);
@@ -117,4 +130,5 @@ public class CmdExecutor {
 
         }
     }
+
 }
